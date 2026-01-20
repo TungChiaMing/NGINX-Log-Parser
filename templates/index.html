@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Nginx Analyzer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="card">
+    <h2>Nginx Log Analyzer</h2>
+    <form method="post">
+        <label>Base URL</label>
+        <input name="base_url" required>
+
+        <label>Token</label>
+        <input name="token">
+
+        <label>Start Time</label>
+        <input name="start_time" value="{{ default_start }}">
+
+        <label>End Time</label>
+        <input name="end_time" value="{{ default_end }}">
+
+        <button>Analyze</button>
+    </form>
+</div>
+</body>
+</html>
