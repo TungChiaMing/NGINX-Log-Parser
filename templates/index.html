@@ -9,18 +9,18 @@
     <h2>Nginx Log Analyzer</h2>
     <form method="post">
         <label>Base URL</label>
-        <input name="base_url" required>
+        <input type="text" name="base_url" required value="{{ base_url or '' }}">
 
-        <label>Token</label>
-        <input name="token">
+        <label>Token (optional)</label>
+        <input type="text" name="token" value="{{ token or '' }}">
 
         <label>Start Time</label>
-        <input name="start_time" value="{{ default_start }}">
+        <input type="text" name="start_time" value="{{ default_start }}" placeholder="YYYY/MM/DD HH:MM:SS">
 
         <label>End Time</label>
-        <input name="end_time" value="{{ default_end }}">
+        <input type="text" name="end_time" value="{{ default_end }}" placeholder="YYYY/MM/DD HH:MM:SS">
 
-        <button>Analyze</button>
+        <button type="submit">Analyze</button>
     </form>
 </div>
 </body>

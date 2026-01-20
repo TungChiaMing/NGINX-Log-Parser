@@ -59,11 +59,22 @@ def create_app():
     @app.route("/", methods=["GET", "POST"])
     @login_required
     def index():
+
+        default_end = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+        default_start = (datetime.now() - timedelta(hours=1)).strftime("%Y/%m/%d %H:%M:%S")
+
+        form_data = {
+            "base_url": "",
+            "token": "",
+            "start_time": default_start,
+            "end_time": default_end
+        }
+
         if request.method == "POST":
-            base_url = request.form["base_url"]
-            token = request.form["token"]
-            start_time = request.form["start_time"]
-            end_time = request.form["end_time"]
+            form_data["base_url"] = request.form.get("base_url", "")
+            form_data["token"] = request.form.get("token", "")
+            form_data["start_time"] = request.form.get("start_time", default_start)
+            form_data["end_time"] = request.form.get("end_time", default_end)
 
             session_id = str(uuid.uuid4())
             session_dir = os.path.join(app.config["UPLOAD_FOLDER"], session_id)
@@ -71,14 +82,15 @@ def create_app():
 
             try:
                 combined_log, summary_log = run_nginx_pipe_analysis(
-                    base_url=base_url,
-                    token=token,
-                    start_time_str=start_time,
-                    end_time_str=end_time,
+                    base_url=form_data["base_url"],
+                    token=form_data["token"],
+                    start_time_str=form_data["start_time"],
+                    end_time_str=form_data["end_time"],
                     output_dir=session_dir
                 )
 
-                # render result.html with two download links
+                session["last_form_data"] = form_data
+
                 return render_template(
                     "result.html",
                     success=True,
@@ -95,13 +107,15 @@ def create_app():
                     error=str(e)
                 )
 
-        default_end = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
-        default_start = (datetime.now() - timedelta(hours=1)).strftime("%Y/%m/%d %H:%M:%S")
+        if "last_form_data" in session:
+            form_data = session["last_form_data"]
 
         return render_template(
             "index.html",
-            default_start=default_start,
-            default_end=default_end
+            base_url=form_data["base_url"],
+            token=form_data["token"],
+            default_start=form_data["start_time"],
+            default_end=form_data["end_time"]
         )
 
     # -------------------------
