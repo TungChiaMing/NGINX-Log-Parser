@@ -92,29 +92,47 @@ class NginxLogAnalyzerApp:
                 os.makedirs(session_dir, exist_ok=True)
 
                 try:
-                    combined_log, summary_log = run_nginx_log_analysis(
-                        base_url=form_data["base_url"],
-                        token=form_data["token"],
-                        start_time_str=form_data["start_time"],
-                        end_time_str=form_data["end_time"],
-                        output_dir=session_dir
-                    )
+                  results = []
 
-                    combined_content = self.read_text_file_safe(combined_log)
-                    summary_content = self.read_text_file_safe(summary_log)
+                  raw_base_urls = form_data["base_url"]
 
-                    session["last_form_data"] = form_data
+                  base_urls = [
+                      u.strip()
+                      for u in raw_base_urls.split(",")
+                      if u.strip()
+                  ]
 
-                    return render_template(
-                        "result.html",
-                        success=True,
-                        session_id=session_id,
-                        combined_log=os.path.basename(combined_log),
-                        summary_log=os.path.basename(summary_log),
-                        combined_content=combined_content,
-                        summary_content=summary_content,
-                        username=session.get("username")
-                    )
+                  for base_url in base_urls:
+                      url_id = base_url.replace("://", "_").replace("/", "_")
+
+                      url_dir = os.path.join(session_dir, url_id)
+                      os.makedirs(url_dir, exist_ok=True)
+
+                      combined_log, summary_log = run_nginx_log_analysis(
+                          base_url=base_url,
+                          token=form_data["token"],
+                          start_time_str=form_data["start_time"],
+                          end_time_str=form_data["end_time"],
+                          output_dir=url_dir
+                      )
+
+                      results.append({
+                          "base_url": base_url,
+                          "combined_log": os.path.basename(combined_log),
+                          "summary_log": os.path.basename(summary_log),
+                          "combined_content": self.read_text_file_safe(combined_log),
+                          "summary_content": self.read_text_file_safe(summary_log),
+                          "url_id": url_id
+                      })
+
+                    
+                  return render_template(
+                      "result.html",
+                      success=True,
+                      session_id=session_id,
+                      results=results,
+                      username=session.get("username")
+                  )
 
                 except Exception as e:
                     shutil.rmtree(session_dir, ignore_errors=True)
@@ -134,7 +152,7 @@ class NginxLogAnalyzerApp:
                 username=session.get("username")
             )
 
-        @self.app.route("/download/<session_id>/<filename>")
+        @self.app.route("/download/<session_id>/<path:filename>")
         @self.login_required
         def download(session_id, filename):
             base_path = os.path.join(self.app.config["UPLOAD_FOLDER"], session_id)

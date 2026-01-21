@@ -175,7 +175,7 @@
         {% endif %}
     </div>
 
-    <h1>Nginx 日誌分析結果</h1>
+    <h1>Nginx Log 分析結果</h1>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -187,12 +187,13 @@
         {% endif %}
     {% endwith %}
 
-    <p class="{{ 'success' if success else 'error' }}">
-        {% if success %}
-            分析成功！
-        {% else %}
-            分析失敗。
-        {% endif %}
+    <p class="success">
+        分析成功！
+        <select id="urlSelector" onchange="switchLog()">
+            {% for r in results %}
+                <option value="{{ r.url_id }}">{{ r.base_url }}</option>
+            {% endfor %}
+        </select>
     </p>
 
     {% if not success %}
@@ -201,52 +202,50 @@
     {% endif %}
 
     <div class="download-section">
-        <h2>下載日誌檔案</h2>
 
-        {% if combined_content %}
-            <h2>combined.log 內容預覽</h2>
+        {% for r in results %}
+        <div class="url-log" id="log-{{ r.url_id }}" style="display: none;">
 
+            <h2>combined.log</h2>
             <div class="filter-box">
-                <input
-                    type="text"
-                    id="combinedFilter"
+                <input type="text"
                     placeholder="輸入關鍵字"
-                    oninput="filterCombinedLog()">
+                    oninput="filterCombinedLog('{{ r.url_id }}')">
             </div>
 
-            <div id="combinedLogViewer" class="log-viewer">
-                {{ combined_content }}
+            <div class="log-viewer"
+                id="combined-{{ r.url_id }}"
+                data-original="{{ r.combined_content | e }}">
+                {{ r.combined_content }}
             </div>
-        {% endif %}
 
-        {% if summary_content %}
-            <h2>summary.log 內容預覽</h2>
-            <pre>{{ summary_content }}</pre>
-        {% endif %}
-        
-        {% if combined_log or summary_log %}
+            <h2>summary.log</h2>
+            <pre>{{ r.summary_content }}</pre>
+
+            
             <div class="download-links">
-                {% if combined_log %}
-                    <a href="{{ url_for('download', session_id=session_id, filename=combined_log) }}"
-                       download>
-                        下載 combined.log
-                    </a>
-                {% endif %}
+                <a href="{{ url_for(
+                        'download',
+                        session_id=session_id,
+                        filename=r.url_id ~ '/' ~ r.combined_log
+                    ) }}"
+                download>
+                    下載 combined.log
+                </a>
 
-                {% if summary_log %}
-                    <a href="{{ url_for('download', session_id=session_id, filename=summary_log) }}"
-                       download>
-                        下載 summary.log
-                    </a>
-                {% endif %}
+                <a href="{{ url_for(
+                        'download',
+                        session_id=session_id,
+                        filename=r.url_id ~ '/' ~ r.summary_log
+                    ) }}"
+                download>
+                    下載 summary.log
+                </a>
             </div>
 
-            <p class="note">
-                請注意：下載後，為節省伺服器空間，這些臨時檔案會被自動清理。
-            </p>
-        {% else %}
-            <p>沒有可供下載的檔案。</p>
-        {% endif %}
+        </div>
+        {% endfor %}
+
     </div>
 
     <div class="back-link">
@@ -258,24 +257,32 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-    const viewer = document.getElementById("combinedLogViewer");
-    viewer.dataset.original = viewer.textContent;
+    const first = document.querySelector(".url-log");
+    if (first) first.style.display = "block";
 });
 
-function filterCombinedLog() {
-    const keyword = document.getElementById("combinedFilter").value;
-    const viewer = document.getElementById("combinedLogViewer");
+function switchLog() {
+    const selected = document.getElementById("urlSelector").value;
+    document.querySelectorAll(".url-log").forEach(div => {
+        div.style.display = "none";
+    });
+    document.getElementById("log-" + selected).style.display = "block";
+}
+
+function filterCombinedLog(urlId) {
+    const input = event.target;
+    const viewer = document.getElementById("combined-" + urlId);
     const original = viewer.dataset.original;
 
-    if (!keyword) {
+    if (!input.value) {
         viewer.textContent = original;
         return;
     }
 
     const lines = original.split(/\r?\n/);
-    const filtered = lines.filter(line => line.includes(keyword));
-
-    viewer.textContent = filtered.join("\n");
+    viewer.textContent = lines
+        .filter(l => l.includes(input.value))
+        .join("\n");
 }
 </script>
 

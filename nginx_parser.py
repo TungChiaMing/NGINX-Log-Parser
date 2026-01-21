@@ -160,7 +160,7 @@ def stream_and_filter_log(base_url, filename, token, start_dt, end_dt, out_fp, s
 
             print(f"{line}")
 
-            out_fp.write(line + "\n")
+            out_fp.write(line + "\n") # Fixme
             code = extract_status_code(line)
             if code:
                 status_counter[code] += 1

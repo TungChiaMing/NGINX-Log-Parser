@@ -159,7 +159,7 @@
         {% endif %}
     </div>
 
-    <h1>Nginx 日誌分析工具</h1>
+    <h1>Nginx Log 分析工具</h1>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -174,7 +174,7 @@
     <form method="POST" action="/" id="analysisForm">
 
         <div>
-            <label for="base_url">Nginx 日誌基礎 URL：</label>
+            <label for="base_url">Nginx Log URL：</label>
             <input
               type="text"
               name="base_url"
@@ -192,11 +192,11 @@
             <input
               type="text"
               name="token"
-              placeholder="/wfile"
+              placeholder="wfile"
               value="{{ token | default('') }}"
             >
             <div class="info-text">
-                例如：/wfile（若需要）
+                例如：wfile（若需要）
             </div>
         </div>
 
