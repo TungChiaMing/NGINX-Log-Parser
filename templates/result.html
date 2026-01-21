@@ -1,21 +1,222 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-Hant">
 <head>
-    <title>Result</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分析結果</title>
+
+    <!-- Bootstrap (optional, mainly for basic layout) -->
+    <link rel="stylesheet"
+          href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 900px;
+            margin: auto;
+        }
+
+        h1 {
+            color: #0056b3;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            color: #007bff;
+            margin-top: 25px;
+        }
+
+        .header-info {
+            text-align: right;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        .header-info a {
+            color: #007bff;
+            text-decoration: none;
+            margin-left: 10px;
+        }
+
+        .header-info a:hover {
+            text-decoration: underline;
+        }
+
+        pre {
+            background-color: #e9e9e9;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+
+        /* flash messages */
+        .flash-message {
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .flash-message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .flash-message.danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .flash-message.warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+
+        .flash-message.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .download-section {
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+
+        .download-links a {
+            display: inline-block;
+            background-color: #28a745;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            margin-right: 10px;
+            margin-bottom: 8px;
+            transition: background-color 0.3s ease;
+        }
+
+        .download-links a:hover {
+            background-color: #218838;
+        }
+
+        .note {
+            margin-top: 15px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .back-link {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .back-link a {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
-<body class="center">
-<div class="card">
-    {% if success %}
-        <h2>Analysis Complete</h2>
-        <a href="/download/{{ session_id }}/{{ combined_log }}">Download combined.log</a>
-        <a href="/download/{{ session_id }}/{{ summary_log }}">Download summary.log</a>
-    {% else %}
-        <h2>Error</h2>
-        <p>{{ error }}</p>
+
+<body>
+<div class="container">
+
+    <div class="header-info">
+        {% if username %}
+            您好，{{ username }}！
+            <a href="{{ url_for('logout') }}">登出</a>
+        {% endif %}
+    </div>
+
+    <h1>Nginx 日誌分析結果</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash-message {{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <p class="{{ 'success' if success else 'error' }}">
+        {% if success %}
+            分析成功！
+        {% else %}
+            分析失敗。
+        {% endif %}
+    </p>
+
+    {% if not success %}
+        <h2>錯誤訊息：</h2>
+        <pre>{{ error }}</pre>
     {% endif %}
-    <br>
-    <a href="/">Back</a>
+
+    <div class="download-section">
+        <h2>下載日誌檔案</h2>
+
+        {% if combined_log or summary_log %}
+            <div class="download-links">
+                {% if combined_log %}
+                    <a href="{{ url_for('download', session_id=session_id, filename=combined_log) }}"
+                       download>
+                        下載 combined.log
+                    </a>
+                {% endif %}
+
+                {% if summary_log %}
+                    <a href="{{ url_for('download', session_id=session_id, filename=summary_log) }}"
+                       download>
+                        下載 summary.log
+                    </a>
+                {% endif %}
+            </div>
+
+            <p class="note">
+                請注意：下載後，為節省伺服器空間，這些臨時檔案會被自動清理。
+            </p>
+        {% else %}
+            <p>沒有可供下載的檔案。</p>
+        {% endif %}
+    </div>
+
+    <div class="back-link">
+        <a href="/">返回分析頁面</a>
+    </div>
+
 </div>
 </body>
 </html>
