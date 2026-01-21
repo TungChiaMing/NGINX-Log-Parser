@@ -178,6 +178,7 @@
             <input
               type="text"
               name="base_url"
+              autocomplete="on"
               placeholder="http://example.com/nginx_log/"
               value="{{ base_url | default('') }}"
               required
@@ -192,6 +193,7 @@
             <input
               type="text"
               name="token"
+              autocomplete="on"
               placeholder="wfile"
               value="{{ token | default('') }}"
             >
@@ -205,8 +207,9 @@
             <input
               type="text"
               name="start_time"
+              autocomplete="on"
               placeholder="YYYY/MM/DD HH:MM:SS"
-              value="{{ default_start }}"
+              value="{{ start_time }}"
               required
             >
             <div class="info-text">
@@ -219,8 +222,9 @@
             <input
               type="text"
               name="end_time"
+              autocomplete="on"
               placeholder="YYYY/MM/DD HH:MM:SS"
-              value="{{ default_end }}"
+              value="{{ end_time }}"
               required
             >
             <div class="info-text">

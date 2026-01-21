@@ -87,6 +87,8 @@ class NginxLogAnalyzerApp:
                     "end_time": request.form.get("end_time", default_end),
                 })
 
+                session["last_form_data"] = form_data
+
                 session_id = str(uuid.uuid4())
                 session_dir = os.path.join(self.app.config["UPLOAD_FOLDER"], session_id)
                 os.makedirs(session_dir, exist_ok=True)
