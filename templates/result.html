@@ -147,6 +147,21 @@
         .back-link a:hover {
             text-decoration: underline;
         }
+
+        /* Combined log filter */
+        .filter-box {
+            margin-bottom: 10px;
+        }
+
+        .log-viewer {
+            background-color: #e9e9e9;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 400px;
+        }
     </style>
 </head>
 
@@ -188,6 +203,27 @@
     <div class="download-section">
         <h2>下載日誌檔案</h2>
 
+        {% if combined_content %}
+            <h2>combined.log 內容預覽</h2>
+
+            <div class="filter-box">
+                <input
+                    type="text"
+                    id="combinedFilter"
+                    placeholder="輸入關鍵字"
+                    oninput="filterCombinedLog()">
+            </div>
+
+            <div id="combinedLogViewer" class="log-viewer">
+                {{ combined_content }}
+            </div>
+        {% endif %}
+
+        {% if summary_content %}
+            <h2>summary.log 內容預覽</h2>
+            <pre>{{ summary_content }}</pre>
+        {% endif %}
+        
         {% if combined_log or summary_log %}
             <div class="download-links">
                 {% if combined_log %}
@@ -218,5 +254,31 @@
     </div>
 
 </div>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const viewer = document.getElementById("combinedLogViewer");
+    viewer.dataset.original = viewer.textContent;
+});
+
+function filterCombinedLog() {
+    const keyword = document.getElementById("combinedFilter").value;
+    const viewer = document.getElementById("combinedLogViewer");
+    const original = viewer.dataset.original;
+
+    if (!keyword) {
+        viewer.textContent = original;
+        return;
+    }
+
+    const lines = original.split(/\r?\n/);
+    const filtered = lines.filter(line => line.includes(keyword));
+
+    viewer.textContent = filtered.join("\n");
+}
+</script>
+
+
 </body>
 </html>

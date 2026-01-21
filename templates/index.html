@@ -175,11 +175,13 @@
 
         <div>
             <label for="base_url">Nginx 日誌基礎 URL：</label>
-            <input type="text"
-                   id="base_url"
-                   name="base_url"
-                   value="{{ default_base_url }}"
-                   required>
+            <input
+              type="text"
+              name="base_url"
+              placeholder="http://example.com/nginx_log/"
+              value="{{ base_url | default('') }}"
+              required
+            >
             <div class="info-text">
                 例如：http://example.com/nginx_log/
             </div>
@@ -187,10 +189,12 @@
 
         <div>
             <label for="token">Token（可選）：</label>
-            <input type="text"
-                   id="token"
-                   name="token"
-                   value="{{ default_token }}">
+            <input
+              type="text"
+              name="token"
+              placeholder="/wfile"
+              value="{{ token | default('') }}"
+            >
             <div class="info-text">
                 例如：/wfile（若需要）
             </div>
@@ -198,11 +202,13 @@
 
         <div>
             <label for="start_time">開始時間（YYYY/MM/DD HH:MM:SS）：</label>
-            <input type="text"
-                   id="start_time"
-                   name="start_time"
-                   value="{{ default_start_time }}"
-                   required>
+            <input
+              type="text"
+              name="start_time"
+              placeholder="YYYY/MM/DD HH:MM:SS"
+              value="{{ default_start }}"
+              required
+            >
             <div class="info-text">
                 例如：2026/01/19 00:00:00
             </div>
@@ -210,11 +216,13 @@
 
         <div>
             <label for="end_time">結束時間（YYYY/MM/DD HH:MM:SS）：</label>
-            <input type="text"
-                   id="end_time"
-                   name="end_time"
-                   value="{{ default_end_time }}"
-                   required>
+            <input
+              type="text"
+              name="end_time"
+              placeholder="YYYY/MM/DD HH:MM:SS"
+              value="{{ default_end }}"
+              required
+            >
             <div class="info-text">
                 例如：2026/01/19 10:00:00
             </div>
