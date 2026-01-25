@@ -178,3 +178,5 @@ class NginxLogAnalyzerApp:
 
 if __name__ == "__main__":
     NginxLogAnalyzerApp().run()
+
+app = NginxLogAnalyzerApp().app
