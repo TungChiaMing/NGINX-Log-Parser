@@ -1,0 +1,309 @@
+<!-- templates/nginx_profiles_list.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nginx Profiles</title>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+    <style>
+        body {
+            padding-top: 60px;
+            background-color: #f8f9fa;
+        }
+
+        .container {
+            max-width: 1500px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+
+        .filter-group .form-control,
+        .filter-group .input-group {
+            flex-grow: 1;
+            min-width: 180px;
+        }
+
+        .summary-table th,
+        .summary-table td {
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .summary-table th:first-child,
+        .summary-table td:first-child {
+            text-align: left;
+        }
+
+        .thead-light-grey {
+            background-color: #e9ecef;
+            color: #495057;
+        }
+
+        .log-files-cell {
+            text-align: left;
+            font-size: 0.9em;
+        }
+
+        .log-files-cell ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .latest-log-date-cell {
+            white-space: nowrap;
+            min-width: 120px;
+        }
+
+        .memo-textarea {
+            width: 100%;
+            min-width: 200px;
+            height: 60px;
+            resize: vertical;
+            font-size: 0.9em;
+        }
+
+        .nginx-listen-ports-cell,
+        .upstream-http-ports-cell {
+            white-space: normal;
+            min-width: 100px;
+            font-size: 0.9em;
+        }
+
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <a class="navbar-brand" href="{{ url_for('main_menu') }}">Nginx Platform</a>
+    <div class="collapse navbar-collapse justify-content-end">
+        <span class="navbar-text text-light mr-3">
+            Hello, {{ username }}!
+        </span>
+        <a href="{{ url_for('logout') }}" class="btn btn-outline-light">Logout</a>
+    </div>
+</nav>
+
+<div class="container mt-4">
+
+    {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert">
+                        <span>×</span>
+                    </button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <h1 class="mb-4">Nginx Profiles</h1>
+
+    <!-- Filter Group -->
+    <div class="filter-group">
+
+        <!-- Fab Filter -->
+        <form class="form-inline" method="GET" action="{{ url_for('nginx_profiles') }}">
+            <label class="mr-2">Fab:</label>
+            <select class="form-control" name="fab_filter" onchange="this.form.submit()">
+                {% for fab in fab_options %}
+                    <option value="{{ fab }}" {% if selected_fab_filter == fab %}selected{% endif %}>
+                        {{ fab }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <input type="hidden" name="search" value="{{ search_query }}">
+            <input type="hidden" name="upstream_search" value="{{ upstream_search_query }}">
+            <input type="hidden" name="page" value="1">
+        </form>
+
+        <!-- Nginx Search -->
+        <form class="form-inline flex-grow-1" method="GET" action="{{ url_for('nginx_profiles') }}">
+            <div class="input-group w-100">
+                <input type="text" class="form-control"
+                       placeholder="Search Nginx (e.g., F14NGX)"
+                       name="search"
+                       value="{{ search_query or '' }}">
+                <div class="input-group-append">
+                    <button class="btn btn-success" type="submit">Search Nginx</button>
+                    {% if search_query %}
+                        <a href="{{ url_for('nginx_profiles', fab_filter=selected_fab_filter, upstream_search=upstream_search_query, search='') }}"
+                           class="btn btn-outline-danger">Clear</a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <input type="hidden" name="upstream_search" value="{{ upstream_search_query }}">
+            <input type="hidden" name="fab_filter" value="{{ selected_fab_filter }}">
+            <input type="hidden" name="page" value="1">
+        </form>
+
+        <!-- Upstream Search -->
+        <form class="form-inline flex-grow-1" method="GET" action="{{ url_for('nginx_profiles') }}">
+            <div class="input-group w-100">
+                <input type="text" class="form-control"
+                       placeholder="Search Upstream (e.g., F14FS:445)"
+                       name="upstream_search"
+                       value="{{ upstream_search_query or '' }}">
+                <div class="input-group-append">
+                    <button class="btn btn-success" type="submit">Search Upstream</button>
+                    {% if upstream_search_query %}
+                        <a href="{{ url_for('nginx_profiles', fab_filter=selected_fab_filter, search=search_query, upstream_search='')}}"
+                           class="btn btn-outline-danger">Clear</a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <input type="hidden" name="search" value="{{ search_query }}">
+            <input type="hidden" name="fab_filter" value="{{ selected_fab_filter }}">
+            <input type="hidden" name="page" value="1">
+        </form>
+    </div>
+
+    {% if profiles %}
+    <div class="table-responsive">
+        <table class="table table-hover table-bordered summary-table">
+            <thead class="thead-light-grey">
+            <tr>
+                <th>Nginx</th>
+                <th>Total Files</th>
+                <th>Access Log Off</th>
+                <th>Nginx Listen Ports</th>
+                <th>Upstream HTTP(S)</th>
+                <th>Special Ports</th>
+                <th>Other Ports</th>
+                <th>Log Files</th>
+                <th class="latest-log-date-cell">Latest Log Date</th>
+                <th>Memo</th>
+                <th>Details</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for profile in profiles %}
+            <tr>
+                <td>{{ profile.name | upper }}</td>
+                <td>{{ profile.summary.total_files if profile.summary else "N/A" }}</td>
+                <td>{{ profile.summary.files_with_access_log_off if profile.summary else "N/A" }}</td>
+                <td class="nginx-listen-ports-cell">{{ profile.formatted_nginx_listen_ports }}</td>
+                <td class="upstream-http-ports-cell">{{ profile.formatted_http_ports }}</td>
+                <td>{{ profile.formatted_special_ports or "N/A" }}</td>
+                <td>{{ profile.formatted_other_ports or "N/A" }}</td>
+
+                <td class="log-files-cell">
+                    {% if profile.log_files_list %}
+                        <ul>
+                            {% for log_file in profile.log_files_list %}
+                                <li>{{ log_file }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </td>
+
+                <td class="latest-log-date-cell">{{ profile.latest_log_date }}</td>
+
+                <td>
+                    <textarea class="form-control memo-textarea"
+                              data-server-name="{{ profile.name }}"
+                              data-field="memo">{{ profile.memo }}</textarea>
+                </td>
+
+                <td>
+                    <a href="{{ url_for('nginx_profile_detail', server_name=profile.name) }}"
+                       class="btn btn-sm btn-info">View</a>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% else %}
+        <div class="alert alert-info">
+            No Nginx server profiles found.
+        </div>
+    {% endif %}
+
+    <!-- Pagination -->
+    {% if total_pages > 1 %}
+    <div class="pagination-container">
+        <ul class="pagination">
+            <li class="page-item {% if current_page == 1 %}disabled{% endif %}">
+                <a class="page-link"
+                   href="{{ url_for('nginx_profiles', page=current_page-1, search=search_query, fab_filter=selected_fab_filter, upstream_search=upstream_search_query) }}">
+                    «
+                </a>
+            </li>
+
+            {% for p in range(1, total_pages + 1) %}
+            <li class="page-item {% if current_page == p %}active{% endif %}">
+                <a class="page-link"
+                   href="{{ url_for('nginx_profiles', page=p, search=search_query, fab_filter=selected_fab_filter, upstream_search=upstream_search_query) }}">
+                    {{ p }}
+                </a>
+            </li>
+            {% endfor %}
+
+            <li class="page-item {% if current_page == total_pages %}disabled{% endif %}">
+                <a class="page-link"
+                   href="{{ url_for('nginx_profiles', page=current_page+1, search=search_query, fab_filter=selected_fab_filter, upstream_search=upstream_search_query) }}">
+                    »
+                </a>
+            </li>
+        </ul>
+    </div>
+    {% endif %}
+
+    <div class="text-center mt-4">
+        <a href="{{ url_for('config_scanner') }}" class="btn btn-primary">Run New Scan</a>
+        <a href="{{ url_for('main_menu') }}" class="btn btn-info">Back to Main Menu</a>
+    </div>
+
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script>
+$(document).on('blur', '.memo-textarea', function() {
+    const serverName = $(this).data('server-name');
+    const field = $(this).data('field');
+    const value = $(this).val();
+
+    fetch("/update_profile_field", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            server_name: serverName,
+            field: field,
+            value: value
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (!data.success) {
+            alert("Failed to update memo: " + data.message);
+        }
+    });
+});
+</script>
+
+</body>
+</html>

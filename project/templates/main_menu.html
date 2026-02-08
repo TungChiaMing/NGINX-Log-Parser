@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nginx Platform - Main Menu</title>
+
+    <link rel="stylesheet"
+          href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+    <style>
+        body {
+            padding-top: 50px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 800px;
+        }
+        .card {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <a class="navbar-brand" href="{{ url_for('main_menu') }}">Nginx Platform</a>
+
+    <div class="collapse navbar-collapse justify-content-end">
+        <span class="navbar-text text-light mr-3">
+            Hello, {{ username }}!
+        </span>
+        <a href="{{ url_for('logout') }}" class="btn btn-outline-light">Logout</a>
+    </div>
+</nav>
+
+<div class="container">
+
+    {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert">
+                        <span>×</span>
+                    </button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <h1 class="text-center mb-4">Welcome to Nginx Platform</h1>
+    <p class="lead text-center">Please select a tool to proceed:</p>
+
+    <div class="row mt-5">
+
+        <!-- Log Parser -->
+        <div class="col-md-6">
+            <div class="card text-center shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Nginx Log Parser</h5>
+                    <p class="card-text">
+                        Analyze Nginx access logs for traffic patterns and errors.
+                    </p>
+                    <a href="{{ url_for('log_parser') }}"
+                       class="btn btn-primary btn-lg">
+                        Go to Log Parser
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Config Scanner -->
+        <div class="col-md-6">
+            <div class="card text-center shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Nginx Config Scanner</h5>
+                    <p class="card-text">
+                        Scan Nginx configurations for specific directives.
+                    </p>
+                    <a href="{{ url_for('config_scanner') }}"
+                       class="btn btn-success btn-lg">
+                        Go to Config Scanner
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profiles -->
+        <div class="col-md-6 mt-4 mx-auto">
+            <div class="card text-center shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Nginx Profiles</h5>
+                    <p class="card-text">
+                        View saved Nginx server scan results and historical data.
+                    </p>
+                    <a href="{{ url_for('nginx_profiles') }}"
+                       class="btn btn-info btn-lg">
+                        View Profiles
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+</body>
+</html>

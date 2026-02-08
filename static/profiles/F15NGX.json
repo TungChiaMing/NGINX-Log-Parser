@@ -1,0 +1,48 @@
+{
+  "server_name": "F15NGX",
+  "config_base_url": "http://F15NGX.example.com/nginx_config",
+  "file_analysis": [
+    {
+      "file": "http://F15NGX.example.com/nginx_config",
+      "has_access_log_off": true,
+      "found_80_servers": [],
+      "found_443_servers": [],
+      "found_special_port_servers": [
+        "Server {\n          server\tF15FS:445",
+        "server\tF15FS:445"
+      ],
+      "found_other_port_servers": [],
+      "found_listens": [
+        "listen 445;",
+        "listen 80;"
+      ]
+    }
+  ],
+  "summary": {
+    "total_files": 1,
+    "files_with_access_log_off": 0,
+    "total_80_servers": 0,
+    "total_443_servers": 0,
+    "total_special_port_servers": 2,
+    "total_other_port_servers": 0,
+    "total_listen_directives": 2
+  },
+  "full_server_name": "F15NGX.example.com",
+  "log_dir_info": {
+    "error": null,
+    "log_files": [
+      {
+        "filename": "access.log",
+        "date": "06-Feb-2026",
+        "time": "01:55",
+        "size": "1026"
+      },
+      {
+        "filename": "other.log",
+        "date": "07-Feb-2026",
+        "time": "14:00",
+        "size": "2048"
+      }
+    ]
+  }
+}

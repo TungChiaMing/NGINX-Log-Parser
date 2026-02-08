@@ -1,0 +1,257 @@
+<!-- templates/config_scan_result_partial.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        Nginx Profile:
+        {{ all_scan_results[0].server_name if all_scan_results else 'Unknown' }}
+    </title>
+
+    <link rel="stylesheet"
+          href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+    <style>
+        body {
+            padding-top: 50px;
+            background-color: #f8f9fa;
+        }
+
+        .container {
+            max-width: 1000px;
+        }
+
+        pre {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .file-content-toggle {
+            cursor: pointer;
+            color: #007bff;
+            text-decoration: underline;
+        }
+
+        .file-content {
+            display: none;
+        }
+
+        .log-file-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+        }
+
+        .log-file-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px dashed #e9ecef;
+        }
+
+        .log-file-item:last-child {
+            border-bottom: none;
+        }
+
+        .log-file-item .filename {
+            flex: 3;
+            word-break: break-all;
+        }
+
+        .log-file-item .size {
+            text-align: right;
+        }
+    </style>
+</head>
+
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <a class="navbar-brand" href="{{ url_for('main_menu') }}">Nginx Platform</a>
+
+    <div class="collapse navbar-collapse justify-content-end">
+        <span class="navbar-text text-light mr-3">
+            Hello, {{ username }}!
+        </span>
+        <a href="{{ url_for('logout') }}" class="btn btn-outline-light">Logout</a>
+    </div>
+</nav>
+
+<div class="container mt-5">
+
+<h1 class="mb-4">
+    Nginx Profile:
+    {{ all_scan_results[0].server_name if all_scan_results else 'Unknown' }}
+</h1>
+
+{% if success %}
+
+    {% for server_result in all_scan_results %}
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Server: {{ server_result.server_name }}</h4>
+            <small>Config Base URL: {{ server_result.config_base_url }}</small><br>
+
+            {% if server_result.log_dir_info and not server_result.log_dir_info.error %}
+                <small>
+                    Log Directory:
+                    http://{{ server_result.full_server_name }}/nginx_log/
+                </small>
+            {% endif %}
+        </div>
+
+        <div class="card-body">
+
+            <p><strong>Nginx Config Summary:</strong></p>
+            <ul>
+                <li>Total .conf files processed:
+                    {{ server_result.summary.total_files }}</li>
+
+                <li>Files containing "access_log off":
+                    {{ server_result.summary.files_with_access_log_off }}</li>
+
+                <li>Total server entries with port :80:
+                    {{ server_result.summary.total_80_servers }}</li>
+
+                <li>Total server entries with port :443:
+                    {{ server_result.summary.total_443_servers }}</li>
+
+                <li>Total server entries with special ports
+                    (211, 214, 1433, 8082, 8083, 445):
+                    {{ server_result.summary.total_special_port_servers }}</li>
+
+                <li>Total server entries with other ports:
+                    {{ server_result.summary.total_other_port_servers }}</li>
+
+                <li>Total listen directives:
+                    {{ server_result.summary.total_listen_directives }}</li>
+            </ul>
+
+            <h5 class="mt-4">Detailed Config File Analysis:</h5>
+
+            {% if server_result.file_analysis %}
+            <div class="list-group">
+
+                {% for file_item in server_result.file_analysis %}
+                <div class="list-group-item">
+                    <h6>
+                        File:
+                        <a href="{{ file_item.file }}" target="_blank">
+                            {{ file_item.file }}
+                        </a>
+                    </h6>
+
+                    <small class="text-muted">
+                        Contains "access_log off":
+                        {{ "Yes" if file_item.has_access_log_off else "No" }}
+                    </small>
+
+                    {% if file_item.found_80_servers %}
+                        <pre class="small bg-light">
+{{ file_item.found_80_servers | join("\n") }}
+                        </pre>
+                    {% endif %}
+
+                    {% if file_item.found_443_servers %}
+                        <pre class="small bg-light">
+{{ file_item.found_443_servers | join("\n") }}
+                        </pre>
+                    {% endif %}
+
+                    {% if file_item.found_special_port_servers %}
+                        <pre class="small bg-light">
+{{ file_item.found_special_port_servers | join("\n") }}
+                        </pre>
+                    {% endif %}
+
+                    {% if file_item.found_other_port_servers %}
+                        <pre class="small bg-light">
+{{ file_item.found_other_port_servers | join("\n") }}
+                        </pre>
+                    {% endif %}
+
+                    {% if file_item.found_listens %}
+                        <pre class="small bg-light">
+{{ file_item.found_listens | join("\n") }}
+                        </pre>
+                    {% endif %}
+                </div>
+                {% endfor %}
+
+            </div>
+            {% else %}
+                <p>No .conf files found or processed for this server.</p>
+            {% endif %}
+
+            <h5 class="mt-4">Nginx Log Directory Analysis:</h5>
+
+            {% if server_result.log_dir_info %}
+                {% if server_result.log_dir_info.error %}
+                    <div class="alert alert-warning">
+                        {{ server_result.log_dir_info.error }}
+                    </div>
+                {% elif server_result.log_dir_info.log_files %}
+                    <div class="log-file-list">
+                        <div class="log-file-item" style="font-weight:bold;border-bottom:2px solid #ccc;">
+                            <span class="filename">Filename</span>
+                            <span>Date</span>
+                            <span>Time</span>
+                            <span class="size">Size</span>
+                        </div>
+
+                        {% for log_file in server_result.log_dir_info.log_files %}
+                        <div class="log-file-item">
+                            <span class="filename">
+                                <a href="http://{{ server_result.full_server_name }}/nginx_log/{{ log_file.filename }}"
+                                   target="_blank">
+                                    {{ log_file.filename }}
+                                </a>
+                            </span>
+                            <span>{{ log_file.date }}</span>
+                            <span>{{ log_file.time }}</span>
+                            <span class="size">{{ log_file.size }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p>No log files found in the Nginx log directory.</p>
+                {% endif %}
+            {% else %}
+                <p>Nginx log directory scan was not performed.</p>
+            {% endif %}
+
+        </div>
+    </div>
+    {% endfor %}
+
+{% else %}
+    <div class="alert alert-danger">
+        Error during scan: {{ error }}
+    </div>
+{% endif %}
+
+<div class="text-center mt-4">
+    <a href="{{ url_for('nginx_profiles') }}" class="btn btn-secondary">
+        Back to Profiles
+    </a>
+    <a href="{{ url_for('main_menu') }}" class="btn btn-info">
+        Back to Main Menu
+    </a>
+</div>
+
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+</body>
+</html>
