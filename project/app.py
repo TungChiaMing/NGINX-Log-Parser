@@ -4,9 +4,9 @@ from flask import (
 )
 
 import os
-from project.nginx_parser import log_parser_router
-from project.nginx_profiles import nginx_profile_router
-from project.nginx_config_scanner import config_scanner_router
+from project.log_parser.router import log_parser_router
+from project.nginx_profiles.router import nginx_profile_router
+from project.config_scanner.router import config_scanner_router
 
 from project import utils
 
