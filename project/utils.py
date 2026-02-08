@@ -16,7 +16,7 @@ def read_text_file_safe(path, max_bytes=200_000):
     with open(path, "r", encoding="utf-8", errors="ignore") as f:
         return f.read(max_bytes)
 
-def login_required(self, f):
+def login_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
         if not session.get("logged_in"):

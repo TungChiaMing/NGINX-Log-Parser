@@ -224,7 +224,7 @@
             
             <div class="download-links">
                 <a href="{{ url_for(
-                        'download',
+                        'log_parser.download',
                         session_id=session_id,
                         filename=r.url_id ~ '/' ~ r.combined_log
                     ) }}"
@@ -233,7 +233,7 @@
                 </a>
 
                 <a href="{{ url_for(
-                        'download',
+                        'log_parser.download',
                         session_id=session_id,
                         filename=r.url_id ~ '/' ~ r.summary_log
                     ) }}"
@@ -248,7 +248,7 @@
     </div>
 
     <div class="back-link">
-        <a href="/">返回分析頁面</a>
+        <a href="{{ url_for('log_parser.index') }}">返回分析頁面</a>
     </div>
 
 </div>

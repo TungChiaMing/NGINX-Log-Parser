@@ -70,12 +70,12 @@
 
         <script>
             // Fallback redirect if backend redirect fails
-            window.location.href = "{{ url_for('nginx_profiles') }}";
+            window.location.href = "{{ url_for('nginx_profiles.index') }}";
         </script>
     {% endif %}
 
     <div class="text-center mt-4">
-        <a href="{{ url_for('config_scanner') }}" class="btn btn-secondary">
+        <a href="{{ url_for('config_scanner.index') }}" class="btn btn-secondary">
             Back to Scan Form
         </a>
         <a href="{{ url_for('main_menu') }}" class="btn btn-info">

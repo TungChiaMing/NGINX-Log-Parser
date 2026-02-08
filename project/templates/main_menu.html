@@ -63,7 +63,7 @@
                     <p class="card-text">
                         Analyze Nginx access logs for traffic patterns and errors.
                     </p>
-                    <a href="{{ url_for('log_parser') }}"
+                    <a href="{{ url_for('log_parser.index') }}"
                        class="btn btn-primary btn-lg">
                         Go to Log Parser
                     </a>
@@ -79,7 +79,7 @@
                     <p class="card-text">
                         Scan Nginx configurations for specific directives.
                     </p>
-                    <a href="{{ url_for('config_scanner') }}"
+                    <a href="{{ url_for('config_scanner.index') }}"
                        class="btn btn-success btn-lg">
                         Go to Config Scanner
                     </a>
@@ -95,7 +95,7 @@
                     <p class="card-text">
                         View saved Nginx server scan results and historical data.
                     </p>
-                    <a href="{{ url_for('nginx_profiles') }}"
+                    <a href="{{ url_for('nginx_profiles.index') }}"
                        class="btn btn-info btn-lg">
                         View Profiles
                     </a>

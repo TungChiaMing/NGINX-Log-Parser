@@ -1,4 +1,3 @@
-<!-- templates/nginx_profiles_list.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -120,7 +119,7 @@
     <div class="filter-group">
 
         <!-- Fab Filter -->
-        <form class="form-inline" method="GET" action="{{ url_for('nginx_profiles') }}">
+        <form class="form-inline" method="GET" action="{{ url_for('nginx_profiles.index') }}">
             <label class="mr-2">Fab:</label>
             <select class="form-control" name="fab_filter" onchange="this.form.submit()">
                 {% for fab in fab_options %}
@@ -136,7 +135,7 @@
         </form>
 
         <!-- Nginx Search -->
-        <form class="form-inline flex-grow-1" method="GET" action="{{ url_for('nginx_profiles') }}">
+        <form class="form-inline flex-grow-1" method="GET" action="{{ url_for('nginx_profiles.index') }}">
             <div class="input-group w-100">
                 <input type="text" class="form-control"
                        placeholder="Search Nginx (e.g., F14NGX)"
@@ -145,7 +144,7 @@
                 <div class="input-group-append">
                     <button class="btn btn-success" type="submit">Search Nginx</button>
                     {% if search_query %}
-                        <a href="{{ url_for('nginx_profiles', fab_filter=selected_fab_filter, upstream_search=upstream_search_query, search='') }}"
+                        <a href="{{ url_for('nginx_profiles.index', fab_filter=selected_fab_filter, upstream_search=upstream_search_query, search='') }}"
                            class="btn btn-outline-danger">Clear</a>
                     {% endif %}
                 </div>
@@ -157,7 +156,7 @@
         </form>
 
         <!-- Upstream Search -->
-        <form class="form-inline flex-grow-1" method="GET" action="{{ url_for('nginx_profiles') }}">
+        <form class="form-inline flex-grow-1" method="GET" action="{{ url_for('nginx_profiles.index') }}">
             <div class="input-group w-100">
                 <input type="text" class="form-control"
                        placeholder="Search Upstream (e.g., F14FS:445)"
@@ -166,7 +165,7 @@
                 <div class="input-group-append">
                     <button class="btn btn-success" type="submit">Search Upstream</button>
                     {% if upstream_search_query %}
-                        <a href="{{ url_for('nginx_profiles', fab_filter=selected_fab_filter, search=search_query, upstream_search='')}}"
+                        <a href="{{ url_for('nginx_profiles.index', fab_filter=selected_fab_filter, search=search_query, upstream_search='')}}"
                            class="btn btn-outline-danger">Clear</a>
                     {% endif %}
                 </div>
@@ -228,7 +227,7 @@
                 </td>
 
                 <td>
-                    <a href="{{ url_for('nginx_profile_detail', server_name=profile.name) }}"
+                    <a href="{{ url_for('nginx_profiles.nginx_profile_detail', server_name=profile.name) }}"
                        class="btn btn-sm btn-info">View</a>
                 </td>
             </tr>
@@ -249,7 +248,7 @@
         <ul class="pagination">
             <li class="page-item {% if current_page == 1 %}disabled{% endif %}">
                 <a class="page-link"
-                   href="{{ url_for('nginx_profiles', page=current_page-1, search=search_query, fab_filter=selected_fab_filter, upstream_search=upstream_search_query) }}">
+                   href="{{ url_for('nginx_profiles.index', page=current_page-1, search=search_query, fab_filter=selected_fab_filter, upstream_search=upstream_search_query) }}">
                     «
                 </a>
             </li>
@@ -257,7 +256,7 @@
             {% for p in range(1, total_pages + 1) %}
             <li class="page-item {% if current_page == p %}active{% endif %}">
                 <a class="page-link"
-                   href="{{ url_for('nginx_profiles', page=p, search=search_query, fab_filter=selected_fab_filter, upstream_search=upstream_search_query) }}">
+                   href="{{ url_for('nginx_profiles.index', page=p, search=search_query, fab_filter=selected_fab_filter, upstream_search=upstream_search_query) }}">
                     {{ p }}
                 </a>
             </li>
@@ -265,7 +264,7 @@
 
             <li class="page-item {% if current_page == total_pages %}disabled{% endif %}">
                 <a class="page-link"
-                   href="{{ url_for('nginx_profiles', page=current_page+1, search=search_query, fab_filter=selected_fab_filter, upstream_search=upstream_search_query) }}">
+                   href="{{ url_for('nginx_profiles.index', page=current_page+1, search=search_query, fab_filter=selected_fab_filter, upstream_search=upstream_search_query) }}">
                     »
                 </a>
             </li>
@@ -274,7 +273,7 @@
     {% endif %}
 
     <div class="text-center mt-4">
-        <a href="{{ url_for('config_scanner') }}" class="btn btn-primary">Run New Scan</a>
+        <a href="{{ url_for('config_scanner.index') }}" class="btn btn-primary">Run New Scan</a>
         <a href="{{ url_for('main_menu') }}" class="btn btn-info">Back to Main Menu</a>
     </div>
 
@@ -287,7 +286,7 @@ $(document).on('blur', '.memo-textarea', function() {
     const field = $(this).data('field');
     const value = $(this).val();
 
-    fetch("/update_profile_field", {
+    fetch("/nginx_profiles/update_profile_field", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

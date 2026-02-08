@@ -42,6 +42,149 @@ NGINX_CONFIG_INDICATOR = re.compile(
 )
 
 
+
+
+from project import utils
+from flask import Blueprint, flash, redirect, render_template, request, send_from_directory, session, url_for
+
+config_scanner_router = Blueprint("config_scanner", __name__)
+
+
+@config_scanner_router.route("/", methods=["GET", "POST"])
+@utils.login_required
+def index():
+    form_data = {
+        "server_list": ""
+    }
+
+    if request.method == "POST":
+        form_data.update({
+            "server_list": request.form.get("server_list", "")
+        })
+
+        session["last_form_data_config_scanner"] = form_data
+        try:
+            all_scan_results = []
+            raw_server_names = form_data["server_list"]
+            server_names = [
+                name.strip()
+                for name in raw_server_names.split("\n")
+                if name.strip()
+            ]
+
+
+
+            for server_name in server_names:
+                full_server_name = f"{server_name}.example.com"
+                config_scan_result = None
+                config_target_url_dir = f"http://{full_server_name}/nginx_conf/"
+
+                print(f"Attempting to scan Nginx config directory for {server_name} at {config_target_url_dir}")
+
+
+                try:
+                    temp_result_dir = find_conf_files_and_process(
+                        base_url=config_target_url_dir, 
+                        server_name=server_name
+                    )
+
+                    if temp_result_dir and temp_result_dir.get("file_analysis"):
+                        config_scan_result = temp_result_dir
+                    else:
+                        print(f"No config files found at {config_target_url_dir}. Trying fallback.")
+
+                except Exception as e:
+                    print(f"Error scanning {config_target_url_dir} for {server_name}: {e}. Trying fallback.")
+
+                if config_scan_result is None or not config_scan_result.get("file_analysis"):
+                    config_target_url_file = f"http://{full_server_name}/nginx_config"
+                    print(f"Attempting to scan single Nginx config file for {server_name} at {config_target_url_file}")
+
+                    try:
+                        temp_result_dir = find_conf_files_and_process(
+                            base_url=config_target_url_file, 
+                            server_name=server_name
+                        )
+
+                        if temp_result_dir and temp_result_dir.get("file_analysis"):
+                            config_scan_result = temp_result_dir
+                        else:
+                            print(f"No config file found at {config_target_url_file}.")
+                    except Exception as e:
+                        print(f"Error scanning {config_target_url_file} for {server_name}: {e}.")
+
+                if config_scan_result is None or not config_scan_result.get("file_analysis"):
+                    config_scan_result = {
+                        "server_name": server_name,
+                        "file_analysis": [],
+                        "summary": {
+                            "total_files": 0,
+                            "files_with_access_log_off": 0,
+                            "total_80_servers": 0,
+                            "total_443_servers": 0,
+                            "total_other_ports_servers": 0,
+                            "total_special_ports_servers": 0,
+                            "total_other_port_servers": 0,
+                            "total_listen_directives": 0
+                        },
+
+                        "config_base_url": "N/A",
+                        "error": f"Failed to retrieve config from any expected path."
+                    }
+
+                config_scan_result["full_server_name"] = full_server_name
+
+                log_dir_scan_result = scan_nginx_log_directory(
+                    base_url=f"http://{full_server_name}/nginx_logs/",
+                    server_name=server_name
+                )
+
+                config_scan_result["log_dir_info"] = log_dir_scan_result
+
+                profile_json_filename = f"{server_name}.json"
+
+                profile_json_path = os.path.join(utils.PROFILE_SAVE_DIR, profile_json_filename)
+
+                existing_memo = ""
+
+                if os.path.exists(profile_json_path):
+                    try:
+                        with open(profile_json_path, "r", encoding="utf-8") as f_old:
+                            existing_profile_data = json.load(f_old)
+                            existing_memo = existing_profile_data.get("memo", "")
+                    except json.JSONDecodeError as e:
+                        print(f"Error decoding existing profile JSON for {server_name} to preserve memo: {e}")
+                    except Exception as e:
+                        print(f"Error loading existing profile for {server_name} to preserve memo: {e}")
+
+                config_scan_result["memo"] = existing_memo
+                all_scan_results.append(config_scan_result)
+
+                with open(profile_json_path, "w", encoding="utf-8") as f:
+                    json.dump(config_scan_result, f, indent=4)
+
+                flash("Scan completed and profile saved.", "success")
+                return redirect(url_for('nginx_profiles.index'))
+            
+        except Exception as e:
+            flash(f"An error occurred during scanning: {e}", "danger")
+            return render_template(
+                "config_scan_result.html",
+                success=False,
+                error=str(e),
+                username=session.get("username")
+            )
+
+    if "last_form_data_config_scanner" in session:
+        form_data = session["last_form_data_config_scanner"]
+    
+    return render_template(
+        "config_scan.html",
+        **form_data,
+        username=session.get("username")
+    )
+
+
 def _analyze_conf_content(content: str) -> dict:
     """
     Analyze nginx config content.
