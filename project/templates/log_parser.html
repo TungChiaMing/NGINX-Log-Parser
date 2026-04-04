@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nginx 日誌分析工具</title>
+    <title>Nginx Log Parser</title>
+
+    <link rel="stylesheet"
+          href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f4f4f4;
-            color: #333;
+            padding-top: 56px;
+            background-color: #f8f9fa;
         }
 
         .container {
@@ -19,30 +20,13 @@
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             max-width: 750px;
-            margin: auto;
+            margin-top: 30px;
         }
 
         h1 {
             color: #0056b3;
             text-align: center;
             margin-bottom: 30px;
-        }
-
-        .header-info {
-            text-align: right;
-            margin-bottom: 15px;
-            font-size: 0.9em;
-            color: #555;
-        }
-
-        .header-info a {
-            color: #007bff;
-            text-decoration: none;
-            margin-left: 10px;
-        }
-
-        .header-info a:hover {
-            text-decoration: underline;
         }
 
         form div {
@@ -115,57 +99,34 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-
-        .flash-message {
-            padding: 10px;
-            margin-bottom: 15px;
-            border-radius: 4px;
-            text-align: center;
-        }
-
-        .flash-message.success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .flash-message.danger {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .flash-message.warning {
-            background-color: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeeba;
-        }
-
-        .flash-message.info {
-            background-color: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
-        }
     </style>
 </head>
 
 <body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <a class="navbar-brand" href="{{ url_for('main_menu') }}">Nginx Platform</a>
+    <div class="collapse navbar-collapse justify-content-end">
+        <ul class="navbar-nav mr-3">
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('log_parser.saved') }}">History</a>
+            </li>
+        </ul>
+        <span class="navbar-text text-light mr-3">Hello, {{ username }}!</span>
+        <a href="{{ url_for('logout') }}" class="btn btn-outline-light">Logout</a>
+    </div>
+</nav>
+
 <div class="container">
 
-    <div class="header-info">
-        {% if username %}
-            您好，{{ username }}！
-            <a href="{{ url_for('logout') }}">登出</a>
-        {% endif %}
-    </div>
-
-    <h1>Nginx Log 分析工具</h1>
+    <h1>Nginx Log Parser</h1>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
-                <div class="flash-message {{ category }}">
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                     {{ message }}
+                    <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
                 </div>
             {% endfor %}
         {% endif %}
@@ -174,7 +135,7 @@
     <form method="POST" id="analysisForm">
 
         <div>
-            <label for="base_url">Nginx Log URL：</label>
+            <label for="base_url">Nginx Log URL:</label>
             <input
               type="text"
               name="base_url"
@@ -184,12 +145,12 @@
               required
             >
             <div class="info-text">
-                例如：http://example.com/nginx_log/
+                e.g. http://example.com/nginx_log/
             </div>
         </div>
 
         <div>
-            <label for="token">Token（可選）：</label>
+            <label for="token">Token (optional):</label>
             <input
               type="text"
               name="token"
@@ -198,12 +159,12 @@
               value="{{ token | default('') }}"
             >
             <div class="info-text">
-                例如：wfile（若需要）
+                e.g. wfile (if required)
             </div>
         </div>
 
         <div>
-            <label for="start_time">開始時間（YYYY/MM/DD HH:MM:SS）：</label>
+            <label for="start_time">Start Time (YYYY/MM/DD HH:MM:SS):</label>
             <input
               type="text"
               name="start_time"
@@ -213,12 +174,12 @@
               required
             >
             <div class="info-text">
-                例如：2026/01/19 00:00:00
+                e.g. 2026/01/19 00:00:00
             </div>
         </div>
 
         <div>
-            <label for="end_time">結束時間（YYYY/MM/DD HH:MM:SS）：</label>
+            <label for="end_time">End Time (YYYY/MM/DD HH:MM:SS):</label>
             <input
               type="text"
               name="end_time"
@@ -228,21 +189,25 @@
               required
             >
             <div class="info-text">
-                例如：2026/01/19 10:00:00
+                e.g. 2026/01/19 10:00:00
             </div>
         </div>
 
         <div>
-            <input type="submit" value="開始分析" id="submitButton">
+            <input type="submit" value="Analyze" id="submitButton">
         </div>
     </form>
 
     <div id="loading-indicator">
         <span class="spinner"></span>
-        正在分析中，請稍候…
+        Analyzing, please wait...
     </div>
 
 </div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
 <script>
     document.getElementById('analysisForm').addEventListener('submit', function () {

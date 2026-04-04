@@ -3,18 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>分析結果</title>
+    <title>Log Parser Result</title>
 
-    <!-- Bootstrap (optional, mainly for basic layout) -->
     <link rel="stylesheet"
           href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f4f4f4;
-            color: #333;
+            padding-top: 56px;
+            background-color: #f8f9fa;
         }
 
         .container {
@@ -23,7 +20,7 @@
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             max-width: 900px;
-            margin: auto;
+            margin-top: 30px;
         }
 
         h1 {
@@ -37,23 +34,6 @@
             margin-top: 25px;
         }
 
-        .header-info {
-            text-align: right;
-            margin-bottom: 15px;
-            font-size: 0.9em;
-            color: #555;
-        }
-
-        .header-info a {
-            color: #007bff;
-            text-decoration: none;
-            margin-left: 10px;
-        }
-
-        .header-info a:hover {
-            text-decoration: underline;
-        }
-
         pre {
             background-color: #e9e9e9;
             padding: 15px;
@@ -61,48 +41,6 @@
             overflow-x: auto;
             white-space: pre-wrap;
             word-wrap: break-word;
-        }
-
-        .success {
-            color: green;
-            font-weight: bold;
-        }
-
-        .error {
-            color: red;
-            font-weight: bold;
-        }
-
-        /* flash messages */
-        .flash-message {
-            padding: 10px;
-            margin-bottom: 15px;
-            border-radius: 4px;
-            text-align: center;
-        }
-
-        .flash-message.success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .flash-message.danger {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .flash-message.warning {
-            background-color: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeeba;
-        }
-
-        .flash-message.info {
-            background-color: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
         }
 
         .download-section {
@@ -127,12 +65,6 @@
             background-color: #218838;
         }
 
-        .note {
-            margin-top: 15px;
-            font-size: 0.9em;
-            color: #666;
-        }
-
         .back-link {
             margin-top: 30px;
             text-align: center;
@@ -148,7 +80,6 @@
             text-decoration: underline;
         }
 
-        /* Combined log filter */
         .filter-box {
             margin-bottom: 10px;
         }
@@ -162,44 +93,78 @@
             word-wrap: break-word;
             max-height: 400px;
         }
+
+        .permalink-box {
+            background: #f0f4ff;
+            border: 1px solid #c0d0f0;
+            border-radius: 6px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            font-size: 0.9em;
+            color: #444;
+        }
     </style>
 </head>
 
 <body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <a class="navbar-brand" href="{{ url_for('main_menu') }}">Nginx Platform</a>
+    <div class="collapse navbar-collapse justify-content-end">
+        <ul class="navbar-nav mr-3">
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('log_parser.index') }}">New Query</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('log_parser.saved') }}">History</a>
+            </li>
+        </ul>
+        <span class="navbar-text text-light mr-3">Hello, {{ username }}!</span>
+        <a href="{{ url_for('logout') }}" class="btn btn-outline-light">Logout</a>
+    </div>
+</nav>
+
 <div class="container">
 
-    <div class="header-info">
-        {% if username %}
-            您好，{{ username }}！
-            <a href="{{ url_for('logout') }}">登出</a>
-        {% endif %}
-    </div>
-
-    <h1>Nginx Log 分析結果</h1>
+    <h1>Log Parser Result</h1>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
-                <div class="flash-message {{ category }}">
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                     {{ message }}
+                    <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
                 </div>
             {% endfor %}
         {% endif %}
     {% endwith %}
 
-    <p class="success">
-        分析成功！
-        <select id="urlSelector" onchange="switchLog()">
+    {% if form_data %}
+    <div class="permalink-box">
+        <strong>Query Range:</strong>
+        {{ form_data.start_time }} ~ {{ form_data.end_time }}
+        {% if created_at %}
+        &nbsp;|&nbsp;<strong>Created:</strong> {{ created_at }}
+        {% endif %}
+        <br>
+        <strong>Permalink:</strong>
+        <a href="{{ request.url }}" style="word-break:break-all;">{{ request.url }}</a>
+    </div>
+    {% endif %}
+
+    {% if not success %}
+        <h2>Error:</h2>
+        <pre>{{ error }}</pre>
+    {% else %}
+
+    <p class="text-success font-weight-bold">
+        Analysis complete!
+        <select id="urlSelector" onchange="switchLog()" class="ml-2">
             {% for r in results %}
                 <option value="{{ r.url_id }}">{{ r.base_url }}</option>
             {% endfor %}
         </select>
     </p>
-
-    {% if not success %}
-        <h2>錯誤訊息：</h2>
-        <pre>{{ error }}</pre>
-    {% endif %}
 
     <div class="download-section">
 
@@ -209,7 +174,8 @@
             <h2>combined.log</h2>
             <div class="filter-box">
                 <input type="text"
-                    placeholder="輸入關鍵字"
+                    class="form-control"
+                    placeholder="Filter by keyword"
                     oninput="filterCombinedLog('{{ r.url_id }}')">
             </div>
 
@@ -221,7 +187,6 @@
             <h2>summary.log</h2>
             <pre>{{ r.summary_content }}</pre>
 
-            
             <div class="download-links">
                 <a href="{{ url_for(
                         'log_parser.download',
@@ -229,7 +194,7 @@
                         filename=r.url_id ~ '/' ~ r.combined_log
                     ) }}"
                 download>
-                    下載 combined.log
+                    Download combined.log
                 </a>
 
                 <a href="{{ url_for(
@@ -238,7 +203,7 @@
                         filename=r.url_id ~ '/' ~ r.summary_log
                     ) }}"
                 download>
-                    下載 summary.log
+                    Download summary.log
                 </a>
             </div>
 
@@ -247,12 +212,19 @@
 
     </div>
 
+    {% endif %}
+
     <div class="back-link">
-        <a href="{{ url_for('log_parser.index') }}">返回分析頁面</a>
+        <a href="{{ url_for('log_parser.index') }}">New Query</a>
+        &nbsp;|&nbsp;
+        <a href="{{ url_for('log_parser.saved') }}">History</a>
     </div>
 
 </div>
 
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
@@ -284,7 +256,6 @@ function filterCombinedLog(urlId) {
         .join("\n");
 }
 </script>
-
 
 </body>
 </html>

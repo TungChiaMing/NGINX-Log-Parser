@@ -111,13 +111,12 @@ def extract_status_code(line):
         return parts[8]
     return None
 
-# Fixme
-def extract_client_ip(line):
-    m = re.match(r'^(\d{1,3}(?:\.\d{1,3}){3})', line)
-    return m.group(1) if m else None
+def extract_nth_ip(line, n):
+    matches = re.findall(r'\d{1,3}(?:\.\d{1,3}){3}', line)
+    return matches[n - 1] if len(matches) >= n else None
 
 
-def stream_and_filter_log(base_url, filename, token, start_dt, end_dt, out_fp, status_counter, client_ip_counter):
+def stream_and_filter_log(base_url, filename, token, start_dt, end_dt, out_fp, status_counter, client_ip_counter, server_ip_counter):
     url = f"{base_url.rstrip('/')}/{filename}"
 
     print(f"Processing {filename}")
@@ -166,9 +165,13 @@ def stream_and_filter_log(base_url, filename, token, start_dt, end_dt, out_fp, s
             if code:
                 status_counter[code] += 1
 
-            ip = extract_client_ip(line)
-            if ip:
-                client_ip_counter[ip] += 1
+            client_ip = extract_nth_ip(line, 1)
+            if client_ip:
+                client_ip_counter[client_ip] += 1
+
+            server_ip = extract_nth_ip(line, 2)
+            if server_ip:
+                server_ip_counter[server_ip] += 1
 
 
 
@@ -186,11 +189,11 @@ def run_nginx_log_analysis(base_url, token, start_time_str, end_time_str, output
 
     status_counter = Counter()
     client_ip_counter = Counter()
+    server_ip_counter = Counter()
 
     with open(combined_path, "w", encoding="utf-8") as out:
         for fname in filenames:
-            stream_and_filter_log(base_url, fname, token, start_dt, end_dt, out, status_counter, client_ip_counter)
-
+            stream_and_filter_log(base_url, fname, token, start_dt, end_dt, out, status_counter, client_ip_counter, server_ip_counter)
 
     with open(summary_path, "w", encoding="utf-8") as f:
         f.write("HTTP Status Code Summary:\n")
@@ -199,8 +202,7 @@ def run_nginx_log_analysis(base_url, token, start_time_str, end_time_str, output
             for code, count in sorted(status_counter.items()):
                 f.write(f"{code}: {count}\n")
         else:
-            f.write("No http status code found in the specified time range.\n\n")
-            
+            f.write("No HTTP status code found in the specified time range.\n")
 
         f.write("\nClient IP Address Summary:\n")
         f.write("--------------------------\n")
@@ -208,7 +210,15 @@ def run_nginx_log_analysis(base_url, token, start_time_str, end_time_str, output
             for ip, count in sorted(client_ip_counter.items()):
                 f.write(f"{ip}: {count}\n")
         else:
-            f.write("No client IP address found in the specified time range.\n\n")
+            f.write("No client IP address found in the specified time range.\n")
+
+        f.write("\nServer IP Address Summary:\n")
+        f.write("--------------------------\n")
+        if server_ip_counter:
+            for ip, count in sorted(server_ip_counter.items()):
+                f.write(f"{ip}: {count}\n")
+        else:
+            f.write("No server IP address found in the specified time range.\n")
             
 
     return combined_path, summary_path
